@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: flashlearn
+  datasource:
+    url: jdbc:mysql://localhost:3306/flashlearn?createDatabaseIfNotExist=true
+    username: fl123
+    password: alwayschange
+  jpa:
+    show-sql: true
+  flyway:
+    baseline-on-migrate: true
