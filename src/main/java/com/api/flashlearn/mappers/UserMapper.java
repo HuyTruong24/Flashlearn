@@ -3,6 +3,7 @@ package com.api.flashlearn.mappers;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import com.api.flashlearn.dtos.RegisterUserRequest;
 import com.api.flashlearn.dtos.UserDto;
 import com.api.flashlearn.entities.User;
 
@@ -10,4 +11,6 @@ import com.api.flashlearn.entities.User;
 public interface UserMapper {
     @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
     UserDto toDto(User user);
+
+    User toEntity(RegisterUserRequest userRequest);
 }

@@ -3,6 +3,8 @@ package com.api.flashlearn.entities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.boot.context.properties.bind.DefaultValue;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.NoArgsConstructor;
@@ -20,7 +22,8 @@ public class User {
     private String username;
 
     @Column(name = "profile_img_url")
-    private String profileImgUrl;
+    @Builder.Default
+    private String profileImgUrl = null;
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @Builder.Default
