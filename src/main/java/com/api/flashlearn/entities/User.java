@@ -3,8 +3,6 @@ package com.api.flashlearn.entities;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.boot.context.properties.bind.DefaultValue;
-
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.NoArgsConstructor;
