@@ -5,8 +5,10 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.api.flashlearn.dtos.RegisterUserRequest;
+import com.api.flashlearn.dtos.UpdateUserRequest;
 import com.api.flashlearn.dtos.UserDto;
 import com.api.flashlearn.entities.User;
+import com.api.flashlearn.exceptions.UserNotFoundException;
 import com.api.flashlearn.mappers.UserMapper;
 import com.api.flashlearn.repositories.UserRepository;
 
@@ -43,5 +45,18 @@ public class UserService {
         User user = userMapper.toEntity(request);
         userRepository.save(user);
         return userMapper.toDto(user);
+    }
+    public UserDto updateUser(UpdateUserRequest request) {
+        User user = userRepository.findById(request.getUsername()).orElseThrow(() -> new UserNotFoundException());
+        
+        userMapper.updateUserRequest(request, user);
+        userRepository.save(user);
+        
+        return userMapper.toDto(user);
+    }
+
+    public void deleteUser(String username) {
+        User user = userRepository.findById(username).orElseThrow(() -> new UserNotFoundException());
+        userRepository.delete(user);
     }
 }

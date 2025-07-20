@@ -8,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "folder")
+@Table(name = "flashcard")
 public class Flashcard {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

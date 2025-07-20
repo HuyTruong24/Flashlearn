@@ -4,6 +4,8 @@ package com.api.flashlearn.controllers;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,13 +13,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.api.flashlearn.dtos.RegisterUserRequest;
+import com.api.flashlearn.dtos.UpdateUserRequest;
 import com.api.flashlearn.dtos.UserDto;
+import com.api.flashlearn.exceptions.UserNotFoundException;
 import com.api.flashlearn.services.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
+
 
 
 
@@ -27,10 +33,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
-    @GetMapping("/hello")
-    public String hello() {
-        return new String("yall see this");
-    }
 
     @GetMapping
     public Iterable<UserDto> getAllUsers() {
@@ -59,6 +61,23 @@ public class UserController {
         var uri = uriBuilder.path("/users/{username}").buildAndExpand(userDto.getUsername()).toUri();
         
         return ResponseEntity.created(uri).body(userDto);
+    }
+
+    @PutMapping
+    public ResponseEntity<UserDto> updateUserInfo(@RequestBody UpdateUserRequest request) {
+        var userDto = userService.updateUser(request);
+        return ResponseEntity.ok(userDto);
+    }
+
+    @DeleteMapping("/{username}")
+    public ResponseEntity<Void> deleteUser(@PathVariable(name = "username") String username) {
+        userService.deleteUser(username);
+        return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<?> handleUserNotFoundException(UserNotFoundException ex) {
+        return ResponseEntity.notFound().build();   
     }
     
     

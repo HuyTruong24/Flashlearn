@@ -1,8 +1,11 @@
 package com.api.flashlearn.entities;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,7 +33,7 @@ public class Folder {
     private String summary;
 
     @Column(name = "created_at",  insertable = false, updatable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
     
     @Column(name = "is_favorite")
     private boolean isFavorite;
@@ -40,5 +43,5 @@ public class Folder {
     private User user;
 
     @OneToMany(mappedBy = "folder", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private List<Flashcard> flashcards = new ArrayList<>();
+    private Set<Flashcard> flashcards = new LinkedHashSet<>();
 }

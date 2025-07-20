@@ -9,3 +9,5 @@ spring:
     show-sql: true
   flyway:
     baseline-on-migrate: true
+gemini:
+  apiKey: ${GEMINI_API_KEY}
