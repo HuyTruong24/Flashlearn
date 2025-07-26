@@ -1,5 +1,8 @@
 Create table user (
-	username varchar(20) primary key not null,
+	id       BIGINT AUTO_INCREMENT primary key,
+	email    VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+	name varchar(20) not null,
 	profile_img_url varchar(255)
 );
 Create table folder (
@@ -9,8 +12,8 @@ Create table folder (
 	summary text ,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	is_favorite boolean default false,
-	username varchar(20) not null,
-	foreign key (username) references user(username)
+	user_id BIGINT not null,
+	foreign key (user_id) references user(id)
 );
 Create table flashcard (
 	id CHAR(36) NOT NULL PRIMARY KEY DEFAULT (UUID()),

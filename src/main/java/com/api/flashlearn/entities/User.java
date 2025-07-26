@@ -5,7 +5,6 @@ import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.NoArgsConstructor;
 
 @Setter
 @Getter
@@ -16,8 +15,18 @@ import lombok.NoArgsConstructor;
 @Table(name = "user")
 public class User {
     @Id
-    @Column(name = "username", length = 20)
-    private String username;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "password")
+    private String password;
+    
+    @Column(name = "name", length = 20)
+    private String name;
 
     @Column(name = "profile_img_url")
     @Builder.Default

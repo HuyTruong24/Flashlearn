@@ -39,9 +39,9 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @GetMapping("/{username}")
-    public ResponseEntity<UserDto> getUserByUsername(@PathVariable(name = "username") String username) {
-        var user = userService.getUserByUsername(username);
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDto> getUser(@PathVariable(name = "id") Long id) {
+        var user = userService.getById(id);
         if(user == null) {
             return ResponseEntity.notFound().build();
         }
@@ -50,15 +50,12 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterUserRequest request, UriComponentsBuilder uriBuilder) {
-        if(!request.getUsername().equals(request.getRetypeUsername())) {
-            return ResponseEntity.badRequest().body(Map.of("username","Usernames do not match"));
-        }
-        if(userService.existsByUsername(request.getUsername())) {
-            return ResponseEntity.badRequest().body(Map.of("username","Username already exists"));
+        if(userService.existsByEmail(request.getEmail())) {
+            return ResponseEntity.badRequest().body(Map.of("email","Email already exists"));
         }
 
         var userDto = userService.createUser(request);
-        var uri = uriBuilder.path("/users/{username}").buildAndExpand(userDto.getUsername()).toUri();
+        var uri = uriBuilder.path("/users/{id}").buildAndExpand(userDto.getId()).toUri();
         
         return ResponseEntity.created(uri).body(userDto);
     }
@@ -69,9 +66,9 @@ public class UserController {
         return ResponseEntity.ok(userDto);
     }
 
-    @DeleteMapping("/{username}")
-    public ResponseEntity<Void> deleteUser(@PathVariable(name = "username") String username) {
-        userService.deleteUser(username);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable(name = "id") Long id) {
+        userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 

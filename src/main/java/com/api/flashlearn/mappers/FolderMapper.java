@@ -12,6 +12,6 @@ import com.api.flashlearn.entities.Folder;
 public interface FolderMapper {
     FolderDto toDto(Folder folder);
     FolderItemDto toFolderItemDto(Folder folder);
-    @Mapping(source = "username", target = "user.username")
-    Folder toEntity(CreateFolderRequest folderDto, String username);
+    @Mapping(source = "userId", target = "user.id")
+    Folder toEntity(CreateFolderRequest folderDto, Long userId);
 }

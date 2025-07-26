@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class UpdateUserRequest {
-    private String username;
+    private Long id;
     private String profileImgUrl;
 }

@@ -9,6 +9,12 @@ import org.springframework.data.jpa.repository.Query;
 import com.api.flashlearn.entities.Folder;
 
 public interface FolderRespository extends JpaRepository<Folder, Long>{
-    @Query("SELECT f FROM Folder f WHERE f.user.username = :username")
-    List<Folder> findFoldersByUsername(String username);
+    /*@Query("SELECT f FROM Folder f WHERE f.user.username = :username")
+    List<Folder> findFoldersByUsername(String username);*/
+    @Query("SELECT f FROM Folder f WHERE f.user.id = :userId")
+    Optional<List<Folder>> findFoldersByUserId(Long userId);
+
+    
+
+
 }

@@ -14,10 +14,12 @@ import com.api.flashlearn.exceptions.DuplicateFolderNameException;
 import com.api.flashlearn.exceptions.FolderNotFoundException;
 import com.api.flashlearn.mappers.FolderMapper;
 import com.api.flashlearn.repositories.FolderRespository;
+import com.api.flashlearn.services.AuthService;
 import com.api.flashlearn.services.FolderService;
 import com.api.flashlearn.services.UserService;
 
 import lombok.AllArgsConstructor;
+
 
 import java.util.List;
 import java.util.Map;
@@ -38,21 +40,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping("/folders")
 @AllArgsConstructor
 public class FolderController {
-    private final UserService userService;
-    private final FolderMapper folderMapper;
-    private final FolderRespository folderRepository;
     private final FolderService folderService;
+    private final AuthService authService;
 
     @GetMapping("/{folderId}")
     public FolderDto getFolderById(@PathVariable Long folderId) {
         return folderService.getFolerById(folderId);
     }
 
-    /*@GetMapping("/{username}")
-    public List<FolderDto> getFoldersByUsername(@PathVariable String username) {
-        var folderDtos = folderService.getFoldersByUsername(username);
+    @GetMapping
+    public List<FolderDto> getFoldersOfCurrentUser() {
+        var user = authService.getCurrentUser();
+        var folderDtos = folderService.getFoldersBy(user.getId());
         return folderDtos;
-    }*/
+    }
     
     @GetMapping("/{folderId}/flashcards")
     public ResponseEntity<FolderItemDto> getFolderWithFlashcards(@PathVariable Long folderId) {
@@ -60,23 +61,19 @@ public class FolderController {
         return ResponseEntity.ok(folderItemDto);
     }
     
-    @PostMapping("/{username}")
-    public ResponseEntity<?> createFolder(@PathVariable(name = "username") String username, @RequestBody CreateFolderRequest request, UriComponentsBuilder uriBuilder) {
-        if(!userService.existsByUsername(username)){
+    @PostMapping
+    public ResponseEntity<?> createFolder(@RequestBody CreateFolderRequest request, UriComponentsBuilder uriBuilder) {
+        var user = authService.getCurrentUser();
+        if(user == null){
             return ResponseEntity.badRequest().body(Map.of("error","User does not exist"));
         }
 
-        var folders = folderRepository.findFoldersByUsername(username);
-        folders.stream().forEach(folder -> {
-            if(folder.getName().equals(request.getName())) {
-                throw new RuntimeException("Folder with this name already exists");
-            }
-        });
-        var folder = folderMapper.toEntity(request, username);
-        folderRepository.save(folder);
+        if(!folderService.isFolderNameUnique(request.getName(), user.getId())) {
+            throw new DuplicateFolderNameException("Folder name must be unique for each user");
+        }
 
 
-        var folderDto = folderMapper.toDto(folder);
+        var folderDto = folderService.createFolder(request, user.getId());
 
         var uri = uriBuilder.path("/folders/{id}").buildAndExpand(folderDto.getId()).toUri();
         

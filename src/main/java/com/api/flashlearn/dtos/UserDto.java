@@ -10,7 +10,9 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class UserDto {
-    private String username;
+    private Long id;
+    private String email;
+    private String name;
     private String profileImgUrl;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

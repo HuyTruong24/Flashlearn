@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import com.api.flashlearn.dtos.ErrorDto;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
      /**
@@ -33,8 +35,8 @@ public class GlobalExceptionHandler {
      * @return a ResponseEntity containing error message
      */
     @ExceptionHandler(WebClientResponseException.class)
-    public ResponseEntity<Map<String, String>> handleValidationErrors(WebClientResponseException exception) {
+    public ResponseEntity<ErrorDto> handleValidationErrors(WebClientResponseException exception) {
         System.out.println("WebClientResponseException: " + exception.getMessage());
-        return ResponseEntity.badRequest().body(Map.of("error",exception.getMessage()));
+        return ResponseEntity.badRequest().body(new ErrorDto(exception.getMessage()));
     }
 }

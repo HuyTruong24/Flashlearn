@@ -2,6 +2,7 @@ package com.api.flashlearn.services;
 
 import java.util.List;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.api.flashlearn.dtos.RegisterUserRequest;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()
@@ -27,14 +29,19 @@ public class UserService {
                 .toList();
     }
 
-    public UserDto getUserByUsername(String username) {
-        return userRepository.findById(username)
+    public UserDto getById(Long id) {
+        return userRepository.findById(id)
+                .map(userMapper::toDto)
+                .orElse(null);
+    }
+    public UserDto getByEmail(String email) {
+        return userRepository.findByEmail(email)
                 .map(userMapper::toDto)
                 .orElse(null);
     }
 
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 
     public void save(User user) {
@@ -43,11 +50,12 @@ public class UserService {
 
     public UserDto createUser(RegisterUserRequest request) {
         User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
         return userMapper.toDto(user);
     }
     public UserDto updateUser(UpdateUserRequest request) {
-        User user = userRepository.findById(request.getUsername()).orElseThrow(() -> new UserNotFoundException());
+        User user = userRepository.findById(request.getId()).orElseThrow(() -> new UserNotFoundException());
         
         userMapper.updateUserRequest(request, user);
         userRepository.save(user);
@@ -55,8 +63,8 @@ public class UserService {
         return userMapper.toDto(user);
     }
 
-    public void deleteUser(String username) {
-        User user = userRepository.findById(username).orElseThrow(() -> new UserNotFoundException());
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException());
         userRepository.delete(user);
     }
 }

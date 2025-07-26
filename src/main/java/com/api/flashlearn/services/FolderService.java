@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.api.flashlearn.dtos.CreateFlashcardRequest;
+import com.api.flashlearn.dtos.CreateFolderRequest;
 import com.api.flashlearn.dtos.FlashcardDto;
 import com.api.flashlearn.dtos.FolderDto;
 import com.api.flashlearn.dtos.FolderItemDto;
@@ -26,11 +27,11 @@ public class FolderService {
     private final FlashcardRespository flashcardRepository;
     private final FlashcardMapper flashcardMapper;
 
-    public List<FolderDto> getFoldersByUsername(String username) {
-        var folders = folderRepository.findFoldersByUsername(username);
-        if (folders.isEmpty()) {
-            throw new FolderNotFoundException("No folders found for username: " + username);
-        }
+    public List<FolderDto> getFoldersBy(Long userId) {
+        var folders = folderRepository
+                        .findFoldersByUserId(userId)
+                        .orElseThrow(() -> new FolderNotFoundException("No folders found for userId: " + userId));
+    
         return folders.stream()
             .map(folderMapper::toDto)
             .toList();
@@ -42,6 +43,23 @@ public class FolderService {
     public FolderItemDto getFolerItems(Long folderId) {
         var folder = folderRepository.findById(folderId).orElseThrow(() -> new FolderNotFoundException("Folder not found with ID: " + folderId));
         return folderMapper.toFolderItemDto(folder);
+    }
+    public boolean isFolderNameUnique(String name, Long userId) {
+        var folders = folderRepository
+                        .findFoldersByUserId(userId)
+                        .orElseThrow(() -> new FolderNotFoundException("No folders found for userId: " + userId));
+        for (Folder folder : folders) {
+            if (folder.getName().equals(name)) {
+                return false; // Name is not unique
+            }
+        }
+        return true;
+    }
+
+    public FolderDto createFolder(CreateFolderRequest request, Long userId) {
+        var folder = folderMapper.toEntity(request, userId);
+        folderRepository.save(folder);
+        return folderMapper.toDto(folder);
     }
 
     public List<FlashcardDto> addToFolder(Long folderId, List<CreateFlashcardRequest> cards) {
