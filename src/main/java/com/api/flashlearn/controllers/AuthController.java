@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,6 +52,34 @@ public class AuthController {
         response.addCookie(cookie); // add the cookie to the response
         
         return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
+    }
+    /*
+     * This endpoint is used to refresh the access token using the refresh token stored in a cookie.
+     * It checks if the refresh token is valid and not expired, then generates a new access token.
+     * If the refresh token is invalid or expired, it returns a 401 Unauthorized response.
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<JwtResponse> refresh(@CookieValue(value = "refreshToken") String refreshToken) {
+        var jwt = jwtService.parseToken(refreshToken);
+       if(jwt == null || jwt.isExpired()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        var userId = jwt.getUserId();
+        var user = userRepository.findById(userId).orElseThrow();
+        var accessToken = jwtService.generateAccessToken(user);
+        
+        return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        var cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/auth/refresh");
+        cookie.setMaxAge(0); // expire the cookie immediately
+        cookie.setSecure(true); // only sent over HTTPS
+        response.addCookie(cookie);
+        return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler(BadCredentialsException.class)

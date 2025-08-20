@@ -1,6 +1,7 @@
 package com.api.flashlearn.filters;
 
 import java.io.IOException;
+import java.util.Collections;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -42,7 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
         var userId = jwt.getUserId();
         var authentication = new UsernamePasswordAuthenticationToken(
                 userId, 
-                null
+                null,
+                Collections.emptyList() 
         );
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 

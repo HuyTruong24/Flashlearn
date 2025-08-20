@@ -36,6 +36,16 @@ public class FolderService {
             .map(folderMapper::toDto)
             .toList();
     }
+    public List<FolderDto> getFavoriteFoldersBy(Long userId) {
+        var folders = folderRepository
+                        .findFoldersByUserId(userId)
+                        .orElseThrow(() -> new FolderNotFoundException("No folders found for userId: " + userId));
+    
+        return folders.stream()
+            .filter(folder -> folder.isFavorite())
+            .map(folderMapper::toDto)
+            .toList();
+    }
     public FolderDto getFolerById(Long folderId) {
         var folder = folderRepository.findById(folderId).orElseThrow(() -> new FolderNotFoundException("Folder not found with ID: " + folderId));
         return folderMapper.toDto(folder);
@@ -86,5 +96,12 @@ public class FolderService {
             () -> new FolderNotFoundException("Folder not found with ID: " + id)
         );
         folderRepository.delete(folder);
+    }
+    public void updateFavoriteStatus(Long folderId, boolean isFavorite) {
+        var folder = folderRepository.findById(folderId).orElseThrow(
+            () -> new FolderNotFoundException("Folder not found with ID: " + folderId)
+        );
+        folder.setFavorite(isFavorite);
+        folderRepository.save(folder);
     }
 }

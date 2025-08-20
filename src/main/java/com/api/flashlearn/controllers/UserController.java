@@ -16,32 +16,32 @@ import com.api.flashlearn.dtos.RegisterUserRequest;
 import com.api.flashlearn.dtos.UpdateUserRequest;
 import com.api.flashlearn.dtos.UserDto;
 import com.api.flashlearn.exceptions.UserNotFoundException;
+import com.api.flashlearn.services.AuthService;
 import com.api.flashlearn.services.UserService;
 
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 
-
-
-
-
 @RestController
 @RequestMapping("/users")
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final AuthService authService;
 
     @GetMapping
     public Iterable<UserDto> getAllUsers() {
         return userService.getAllUsers();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUser(@PathVariable(name = "id") Long id) {
-        var user = userService.getById(id);
+    @GetMapping("/me")
+    public ResponseEntity<UserDto> getUser() {
+        var currentUser = authService.getCurrentUser();
+        var user = userService.getById(currentUser.getId());
         if(user == null) {
             return ResponseEntity.notFound().build();
         }
@@ -60,15 +60,17 @@ public class UserController {
         return ResponseEntity.created(uri).body(userDto);
     }
 
-    @PutMapping
+    @PutMapping("/me")
     public ResponseEntity<UserDto> updateUserInfo(@RequestBody UpdateUserRequest request) {
-        var userDto = userService.updateUser(request);
+        var currentUser = authService.getCurrentUser();
+        var userDto = userService.updateUser(currentUser.getId(), request);
         return ResponseEntity.ok(userDto);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable(name = "id") Long id) {
-        userService.deleteUser(id);
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteUser() {
+        var currentUser = authService.getCurrentUser();
+        userService.deleteUser(currentUser.getId());
         return ResponseEntity.noContent().build();
     }
 

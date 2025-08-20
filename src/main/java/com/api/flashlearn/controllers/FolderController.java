@@ -10,6 +10,7 @@ import com.api.flashlearn.dtos.ErrorDto;
 import com.api.flashlearn.dtos.FlashcardDto;
 import com.api.flashlearn.dtos.FolderDto;
 import com.api.flashlearn.dtos.FolderItemDto;
+import com.api.flashlearn.dtos.UpdateFavoriteStatus;
 import com.api.flashlearn.exceptions.DuplicateFolderNameException;
 import com.api.flashlearn.exceptions.FolderNotFoundException;
 import com.api.flashlearn.mappers.FolderMapper;
@@ -33,6 +34,9 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.PutMapping;
+
 
 
 
@@ -52,6 +56,12 @@ public class FolderController {
     public List<FolderDto> getFoldersOfCurrentUser() {
         var user = authService.getCurrentUser();
         var folderDtos = folderService.getFoldersBy(user.getId());
+        return folderDtos;
+    }
+    @GetMapping("/favorite")
+    public List<FolderDto> getFavoriteFoldersOfCurrentUser() {
+        var user = authService.getCurrentUser();
+        var folderDtos = folderService.getFavoriteFoldersBy(user.getId());
         return folderDtos;
     }
     
@@ -94,6 +104,12 @@ public class FolderController {
     @DeleteMapping("/{folderId}")
     public ResponseEntity<Void> deleteFolder(@PathVariable Long folderId) {
         folderService.deleteFolder(folderId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{folderId}")
+    public ResponseEntity<Void> updateFavoriteStatus(@PathVariable Long folderId, @RequestBody UpdateFavoriteStatus request) {
+        folderService.updateFavoriteStatus(folderId, request.isFavorite());
         return ResponseEntity.noContent().build();
     }
 
