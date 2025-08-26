@@ -11,7 +11,7 @@ spring:
     baseline-on-migrate: true
   jwt:
     secret: ${JWT_SECRET}
-    accessTokenExpiration: 300 # 5 minutes
-    refreshTokenExpiration: 604800 # 7 days
+    accessTokenExpiration: 120 # 10 minutes
+    refreshTokenExpiration: 86400 # 1 day
 gemini:
   apiKey: ${GEMINI_API_KEY}

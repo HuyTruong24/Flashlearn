@@ -12,7 +12,7 @@ import lombok.Data;
 public class FolderDto {
     private Long id;
     private String name;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "dd MMM yyyy, h:mm a")
     private LocalDateTime createdAt;
     @JsonProperty("isFavorite")
     private boolean isFavorite;

@@ -22,3 +22,11 @@ Create table flashcard (
 	folder_id bigint not null,
 	foreign key (folder_id) references folder(id)
 );
+
+Create table password_reset_token (
+	id BIGINT AUTO_INCREMENT primary key,
+	token VARCHAR(255) NOT NULL,
+	user_id BIGINT NOT NULL,
+	expiry_date TIMESTAMP NOT NULL,
+	foreign key (user_id) references user(id)
+)

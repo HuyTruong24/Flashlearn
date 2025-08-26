@@ -5,10 +5,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.api.flashlearn.config.JwtConfig;
+import com.api.flashlearn.dtos.ResetPasswordRequest;
+import com.api.flashlearn.dtos.EmailVerificationRequest;
 import com.api.flashlearn.dtos.JwtResponse;
 import com.api.flashlearn.dtos.LoginRequest;
+import com.api.flashlearn.dtos.PasswordResetTokenDto;
 import com.api.flashlearn.entities.User;
+import com.api.flashlearn.exceptions.PasswordMismatchException;
+import com.api.flashlearn.exceptions.TokenNotFoundException;
+import com.api.flashlearn.exceptions.UserNotFoundException;
 import com.api.flashlearn.repositories.UserRepository;
+import com.api.flashlearn.services.AuthService;
 import com.api.flashlearn.services.JwtService;
 import com.api.flashlearn.services.UserService;
 
@@ -17,13 +24,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -36,6 +48,8 @@ public class AuthController {
     private final JwtService jwtService;
     private final JwtConfig jwtConfig;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
     
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
@@ -71,6 +85,31 @@ public class AuthController {
         
         return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
     }
+    @PostMapping("/verify-email-for-password-reset")
+    public ResponseEntity<PasswordResetTokenDto> verifyEmail(@Valid @RequestBody EmailVerificationRequest request) {
+        var tokenDto = authService.createPasswordResetToken(request.getEmail());
+        return ResponseEntity.ok().body(tokenDto);
+    }
+    
+    @PostMapping("/reset-password/{userId}/{tokenId}")
+    public ResponseEntity<Void> resetPassword(
+        @PathVariable Long userId,
+        @PathVariable Long tokenId,
+        @Valid @RequestBody ResetPasswordRequest request) {
+
+        if(!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new PasswordMismatchException();
+        }
+
+        authService.validatePasswordResetToken(tokenId, request.getToken());
+
+        var user = userRepository.findById(userId).orElseThrow();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        
+        return ResponseEntity.ok().build();
+    }
+    
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
         var cookie = new Cookie("refreshToken", null);
@@ -85,6 +124,10 @@ public class AuthController {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Void> handleBadCredentialsException() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    @ExceptionHandler(TokenNotFoundException.class)
+    public ResponseEntity<Void> handleTokenNotFoundException() {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
     
 }
