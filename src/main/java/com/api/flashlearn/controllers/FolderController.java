@@ -11,6 +11,7 @@ import com.api.flashlearn.dtos.FlashcardDto;
 import com.api.flashlearn.dtos.FolderDto;
 import com.api.flashlearn.dtos.FolderItemDto;
 import com.api.flashlearn.dtos.UpdateFavoriteStatus;
+import com.api.flashlearn.dtos.UpdateFlashcardsRequest;
 import com.api.flashlearn.exceptions.DuplicateFolderNameException;
 import com.api.flashlearn.exceptions.FolderNotFoundException;
 import com.api.flashlearn.mappers.FolderMapper;
@@ -53,15 +54,15 @@ public class FolderController {
     }
 
     @GetMapping
-    public List<FolderDto> getFoldersOfCurrentUser() {
+    public List<FolderDto> getFoldersOfCurrentUser(@RequestParam(required = false, name = "name", defaultValue = "") String folderName) {
         var user = authService.getCurrentUser();
-        var folderDtos = folderService.getFoldersBy(user.getId());
+        var folderDtos = folderService.getFoldersBy(user.getId(), folderName);
         return folderDtos;
     }
     @GetMapping("/favorite")
-    public List<FolderDto> getFavoriteFoldersOfCurrentUser() {
+    public List<FolderDto> getFavoriteFoldersOfCurrentUser(@RequestParam(required = false, name = "name", defaultValue = "") String folderName) {
         var user = authService.getCurrentUser();
-        var folderDtos = folderService.getFavoriteFoldersBy(user.getId());
+        var folderDtos = folderService.getFavoriteFoldersBy(user.getId(), folderName);
         return folderDtos;
     }
     
@@ -96,6 +97,15 @@ public class FolderController {
         @RequestBody List<CreateFlashcardRequest> request) {
         
         List<FlashcardDto> flashcardDtos = folderService.addToFolder(folderId, request);
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(flashcardDtos);
+    }
+    @PutMapping("/{folderId}/flashcards")
+    public ResponseEntity<List<FlashcardDto>> updateFlashcards(
+        @PathVariable Long folderId,
+        @RequestBody UpdateFlashcardsRequest request) {
+        
+        List<FlashcardDto> flashcardDtos = folderService.updateFlashcardsInFolder(folderId, request.getExistingCards(), request.getRemovedCards());
         
         return ResponseEntity.status(HttpStatus.CREATED).body(flashcardDtos);
     }

@@ -112,11 +112,6 @@ public class GeminiService {
         jsonPayload.add("generationConfig", generationConfig);
 
         return gson.toJson(jsonPayload);
-
-        /* "{"
-                + "\"contents\": [{\"role\": \"user\", \"parts\": [{\"text\": \"" + requestText + "\"}]}],"
-                + "\"generationConfig\": {\"temperature\": 1}"
-                + "}" */
     }
 
     private String getText(String rb) {

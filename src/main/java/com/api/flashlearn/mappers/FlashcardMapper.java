@@ -12,4 +12,5 @@ import com.api.flashlearn.entities.Folder;
 public interface FlashcardMapper {
     FlashcardDto toDto(Flashcard flashcard);
     Flashcard toEntity(CreateFlashcardRequest flashcardDto);
+    Flashcard toEntity(FlashcardDto flashcardDto);
 }

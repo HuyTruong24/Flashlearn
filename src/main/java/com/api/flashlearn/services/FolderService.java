@@ -27,22 +27,23 @@ public class FolderService {
     private final FlashcardRespository flashcardRepository;
     private final FlashcardMapper flashcardMapper;
 
-    public List<FolderDto> getFoldersBy(Long userId) {
+    public List<FolderDto> getFoldersBy(Long userId, String folderName) {
         var folders = folderRepository
                         .findFoldersByUserId(userId)
                         .orElseThrow(() -> new FolderNotFoundException("No folders found for userId: " + userId));
     
         return folders.stream()
+            .filter(folder -> folder.getName().contains(folderName) || folderName.contains(folder.getName()))
             .map(folderMapper::toDto)
             .toList();
     }
-    public List<FolderDto> getFavoriteFoldersBy(Long userId) {
+    public List<FolderDto> getFavoriteFoldersBy(Long userId, String folderName) {
         var folders = folderRepository
                         .findFoldersByUserId(userId)
                         .orElseThrow(() -> new FolderNotFoundException("No folders found for userId: " + userId));
     
         return folders.stream()
-            .filter(folder -> folder.isFavorite())
+            .filter(folder -> folder.isFavorite() || folder.getName().contains(folderName) || folderName.contains(folder.getName()))
             .map(folderMapper::toDto)
             .toList();
     }
@@ -77,6 +78,33 @@ public class FolderService {
             .orElseThrow(() -> new FolderNotFoundException("Folder not found with ID: " + folderId));
 
         List<Flashcard> flashcards = cards.stream()
+            .map(card -> {
+                var flashcard = flashcardMapper.toEntity(card);
+                flashcard.setFolder(folder);
+                return flashcard;
+            })
+            .toList();
+
+        flashcardRepository.saveAll(flashcards);
+
+        return flashcards.stream()
+            .map(flashcardMapper::toDto)
+            .toList();
+    }
+
+    public List<FlashcardDto> updateFlashcardsInFolder(Long folderId, List<FlashcardDto> existingCards, List<FlashcardDto> removedCards) {
+        var folder = folderRepository.findById(folderId)
+            .orElseThrow(() -> new FolderNotFoundException("Folder not found with ID: " + folderId));
+
+        if(removedCards != null) {
+            flashcardRepository.deleteAllById(removedCards.stream().map(FlashcardDto::getId).toList());
+        }
+
+        if(existingCards == null) {
+            return List.of();
+        }
+        
+        List<Flashcard> flashcards = existingCards.stream()
             .map(card -> {
                 var flashcard = flashcardMapper.toEntity(card);
                 flashcard.setFolder(folder);
