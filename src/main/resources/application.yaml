@@ -13,5 +13,8 @@ spring:
     secret: ${JWT_SECRET}
     accessTokenExpiration: 120 # 10 minutes
     refreshTokenExpiration: 86400 # 1 day
+  mail:
+    username: ${MAIL_USERNAME}
+    password: ${APP_PASSWORD}
 gemini:
   apiKey: ${GEMINI_API_KEY}

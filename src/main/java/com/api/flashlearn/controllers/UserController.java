@@ -46,18 +46,6 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterUserRequest request, UriComponentsBuilder uriBuilder) {
-        if(userService.existsByEmail(request.getEmail())) {
-            return ResponseEntity.badRequest().body(Map.of("email","Email already exists"));
-        }
-
-        var userDto = userService.createUser(request);
-        var uri = uriBuilder.path("/users/{id}").buildAndExpand(userDto.getId()).toUri();
-        
-        return ResponseEntity.created(uri).body(userDto);
-    }
-
     @PutMapping("/me")
     public ResponseEntity<UserDto> updateUserInfo(@RequestBody UpdateUserRequest request) {
         var currentUser = authService.getCurrentUser();

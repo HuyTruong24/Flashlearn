@@ -11,5 +11,5 @@ import lombok.Data;
 @Data
 public class GeminiConfig {
     @Value("${gemini.apiKey}")
-    public String apiKey;
+    private String apiKey;
 }

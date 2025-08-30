@@ -3,7 +3,10 @@ Create table user (
 	email    VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
 	name varchar(20) not null,
-	profile_img_url varchar(255)
+	profile_img_url varchar(255),
+	verification_code varchar(6) default null,
+	code_expiry_time TIMESTAMP default null,
+	enabled boolean default false,
 );
 Create table folder (
 	id bigint auto_increment primary key,

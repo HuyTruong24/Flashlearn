@@ -3,14 +3,20 @@ package com.api.flashlearn.controllers;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.api.flashlearn.config.JwtConfig;
 import com.api.flashlearn.dtos.ResetPasswordRequest;
+import com.api.flashlearn.dtos.VerifyUserRequest;
 import com.api.flashlearn.dtos.EmailVerificationRequest;
+import com.api.flashlearn.dtos.ErrorDto;
 import com.api.flashlearn.dtos.JwtResponse;
 import com.api.flashlearn.dtos.LoginRequest;
 import com.api.flashlearn.dtos.PasswordResetTokenDto;
+import com.api.flashlearn.dtos.RegisterUserRequest;
 import com.api.flashlearn.entities.User;
+import com.api.flashlearn.exceptions.AccountNotVerifiedException;
+import com.api.flashlearn.exceptions.EmailInUseException;
 import com.api.flashlearn.exceptions.PasswordMismatchException;
 import com.api.flashlearn.exceptions.TokenNotFoundException;
 import com.api.flashlearn.exceptions.UserNotFoundException;
@@ -55,6 +61,9 @@ public class AuthController {
     public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        if(!user.isEnabled()) {
+            throw new AccountNotVerifiedException();
+        }
 
         var accessToken = jwtService.generateAccessToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
@@ -67,6 +76,15 @@ public class AuthController {
         
         return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
     }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterUserRequest request, UriComponentsBuilder uriBuilder) {
+        var userDto = authService.register(request);
+        var uri = uriBuilder.path("/users/{id}").buildAndExpand(userDto.getId()).toUri();
+        
+        return ResponseEntity.created(uri).body(userDto);
+    }
+
     /*
      * This endpoint is used to refresh the access token using the refresh token stored in a cookie.
      * It checks if the refresh token is valid and not expired, then generates a new access token.
@@ -109,6 +127,19 @@ public class AuthController {
         
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/verify-user")
+    public ResponseEntity<?> verifyUser(@RequestBody VerifyUserRequest request) {
+        authService.verifyUser(request);
+        return ResponseEntity.ok().body(Map.of("message", "Account verified successfully"));
+    }
+
+    @PostMapping("/resend")
+    public ResponseEntity<?> resendVerificationCode(@RequestBody EmailVerificationRequest request) {
+        authService.resendVerificationCode(request.getEmail());
+        return ResponseEntity.ok().body(Map.of("message", "Verification code sent"));
+    }
+    
     
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
@@ -121,9 +152,17 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    @ExceptionHandler(EmailInUseException.class)
+    public ResponseEntity<ErrorDto> handleEmailInUseException() {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto("Email is already in use"));
+    }
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Void> handleBadCredentialsException() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    @ExceptionHandler(AccountNotVerifiedException.class)
+    public ResponseEntity<ErrorDto> handleAccountNotVerifiedException(AccountNotVerifiedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorDto(ex.getMessage()));
     }
     @ExceptionHandler(TokenNotFoundException.class)
     public ResponseEntity<Void> handleTokenNotFoundException() {

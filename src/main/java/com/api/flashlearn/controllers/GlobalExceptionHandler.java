@@ -45,4 +45,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDto> handlePasswordMismatchException(PasswordMismatchException exception) {
         return ResponseEntity.badRequest().body(new ErrorDto(exception.getMessage()));
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorDto> handleGenericRuntimeException(RuntimeException exception) {
+        return ResponseEntity.badRequest().body(new ErrorDto(exception.getMessage()));
+    }
 }

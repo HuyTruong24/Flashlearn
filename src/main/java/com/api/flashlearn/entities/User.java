@@ -1,5 +1,6 @@
 package com.api.flashlearn.entities;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +32,15 @@ public class User {
     @Column(name = "profile_img_url")
     @Builder.Default
     private String profileImgUrl = null;
+
+    @Column(name = "verification_code", length = 6)
+    private String verificationCode;
+    
+    @Column(name = "code_expiry_time")
+    private LocalDateTime codeExpiryTime;
+
+    @Column(name = "enabled")
+    private boolean isEnabled;
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @Builder.Default

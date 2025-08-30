@@ -48,12 +48,6 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public UserDto createUser(RegisterUserRequest request) {
-        User user = userMapper.toEntity(request);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        userRepository.save(user);
-        return userMapper.toDto(user);
-    }
     public UserDto updateUser(Long id, UpdateUserRequest request) {
         User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException());
         
