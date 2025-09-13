@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.api.flashlearn.dtos.ErrorDto;
-import com.api.flashlearn.exceptions.PasswordMismatchException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -38,11 +37,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(WebClientResponseException.class)
     public ResponseEntity<ErrorDto> handleValidationErrors(WebClientResponseException exception) {
         System.out.println("WebClientResponseException: " + exception.getMessage());
-        return ResponseEntity.badRequest().body(new ErrorDto(exception.getMessage()));
-    }
-
-    @ExceptionHandler(PasswordMismatchException.class)
-    public ResponseEntity<ErrorDto> handlePasswordMismatchException(PasswordMismatchException exception) {
         return ResponseEntity.badRequest().body(new ErrorDto(exception.getMessage()));
     }
 

@@ -48,7 +48,7 @@ public class AuthService {
             }
         }
 
-        User user = userMapper.toEntity(request);
+        var user = registeredUser != null ? registeredUser : userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setVerificationCode(generateVerificationCode());
         user.setCodeExpiryTime(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_DURATION_MINUTES));

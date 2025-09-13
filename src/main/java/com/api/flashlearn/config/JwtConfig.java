@@ -17,6 +17,10 @@ public class JwtConfig {
     private int accessTokenExpiration; // Access token expiration time in seconds
     private int refreshTokenExpiration; // Refresh token expiration time in seconds
 
+    /**
+     * Generates and returns a SecretKey object from the secret key string.
+     * @return SecretKey instance
+     */
     public SecretKey getSecretKey() {
         return Keys.hmacShaKeyFor(secret.getBytes()); // Convert the secret key string to a SecretKey object
     }

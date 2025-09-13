@@ -2,9 +2,7 @@ package com.api.flashlearn.controllers;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import com.api.flashlearn.dtos.CreateFlashcardRequest;
 import com.api.flashlearn.dtos.ErrorDto;
 import com.api.flashlearn.dtos.FlashcardDto;
 import com.api.flashlearn.exceptions.FlashcardNotFoundException;
@@ -21,10 +19,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PutMapping;
-
 
 @RestController
 @RequestMapping("/flashcards")
@@ -47,10 +41,10 @@ public class FlashcardController {
     public ResponseEntity<ErrorDto> handleFlashcardNotFound(FlashcardNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));
     }
+
     @ExceptionHandler(FolderNotFoundException.class)
     public ResponseEntity<ErrorDto> handleFolderNotFound(FolderNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(ex.getMessage()));
     }
-    
-    
+
 }

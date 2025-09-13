@@ -14,14 +14,10 @@ import com.api.flashlearn.dtos.UpdateFavoriteStatus;
 import com.api.flashlearn.dtos.UpdateFlashcardsRequest;
 import com.api.flashlearn.exceptions.DuplicateFolderNameException;
 import com.api.flashlearn.exceptions.FolderNotFoundException;
-import com.api.flashlearn.mappers.FolderMapper;
-import com.api.flashlearn.repositories.FolderRespository;
 import com.api.flashlearn.services.AuthService;
 import com.api.flashlearn.services.FolderService;
-import com.api.flashlearn.services.UserService;
 
 import lombok.AllArgsConstructor;
-
 
 import java.util.List;
 import java.util.Map;
@@ -38,9 +34,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.PutMapping;
 
-
-
-
 @RestController
 @RequestMapping("/folders")
 @AllArgsConstructor
@@ -54,62 +47,65 @@ public class FolderController {
     }
 
     @GetMapping
-    public List<FolderDto> getFoldersOfCurrentUser(@RequestParam(required = false, name = "name", defaultValue = "") String folderName) {
+    public List<FolderDto> getFoldersOfCurrentUser(
+            @RequestParam(required = false, name = "name", defaultValue = "") String folderName) {
         var user = authService.getCurrentUser();
         var folderDtos = folderService.getFoldersBy(user.getId(), folderName);
         return folderDtos;
     }
+
     @GetMapping("/favorite")
-    public List<FolderDto> getFavoriteFoldersOfCurrentUser(@RequestParam(required = false, name = "name", defaultValue = "") String folderName) {
+    public List<FolderDto> getFavoriteFoldersOfCurrentUser(
+            @RequestParam(required = false, name = "name", defaultValue = "") String folderName) {
         var user = authService.getCurrentUser();
         var folderDtos = folderService.getFavoriteFoldersBy(user.getId(), folderName);
         return folderDtos;
     }
-    
+
     @GetMapping("/{folderId}/flashcards")
     public ResponseEntity<FolderItemDto> getFolderWithFlashcards(@PathVariable Long folderId) {
         var folderItemDto = folderService.getFolerItems(folderId);
         return ResponseEntity.ok(folderItemDto);
     }
-    
+
     @PostMapping
     public ResponseEntity<?> createFolder(@RequestBody CreateFolderRequest request, UriComponentsBuilder uriBuilder) {
         var user = authService.getCurrentUser();
-        if(user == null){
-            return ResponseEntity.badRequest().body(Map.of("error","User does not exist"));
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "User does not exist"));
         }
 
-        if(!folderService.isFolderNameUnique(request.getName(), user.getId())) {
+        if (!folderService.isFolderNameUnique(request.getName(), user.getId())) {
             throw new DuplicateFolderNameException("Folder name must be unique for each user");
         }
-
 
         var folderDto = folderService.createFolder(request, user.getId());
 
         var uri = uriBuilder.path("/folders/{id}").buildAndExpand(folderDto.getId()).toUri();
-        
+
         return ResponseEntity.created(uri).body(folderDto);
     }
 
     @PostMapping("/{folderId}/flashcards")
     public ResponseEntity<List<FlashcardDto>> addCardsToFolder(
-        @PathVariable Long folderId,
-        @RequestBody List<CreateFlashcardRequest> request) {
-        
+            @PathVariable Long folderId,
+            @RequestBody List<CreateFlashcardRequest> request) {
+
         List<FlashcardDto> flashcardDtos = folderService.addToFolder(folderId, request);
-        
+
         return ResponseEntity.status(HttpStatus.CREATED).body(flashcardDtos);
     }
+
     @PutMapping("/{folderId}/flashcards")
     public ResponseEntity<List<FlashcardDto>> updateFlashcards(
-        @PathVariable Long folderId,
-        @RequestBody UpdateFlashcardsRequest request) {
-        
-        List<FlashcardDto> flashcardDtos = folderService.updateFlashcardsInFolder(folderId, request.getExistingCards(), request.getRemovedCards());
-        
+            @PathVariable Long folderId,
+            @RequestBody UpdateFlashcardsRequest request) {
+
+        List<FlashcardDto> flashcardDtos = folderService.updateFlashcardsInFolder(folderId, request.getExistingCards(),
+                request.getRemovedCards());
+
         return ResponseEntity.status(HttpStatus.CREATED).body(flashcardDtos);
     }
-    
 
     @DeleteMapping("/{folderId}")
     public ResponseEntity<Void> deleteFolder(@PathVariable Long folderId) {
@@ -118,7 +114,8 @@ public class FolderController {
     }
 
     @PutMapping("/{folderId}")
-    public ResponseEntity<Void> updateFavoriteStatus(@PathVariable Long folderId, @RequestBody UpdateFavoriteStatus request) {
+    public ResponseEntity<Void> updateFavoriteStatus(@PathVariable Long folderId,
+            @RequestBody UpdateFavoriteStatus request) {
         folderService.updateFavoriteStatus(folderId, request.isFavorite());
         return ResponseEntity.noContent().build();
     }
@@ -133,5 +130,4 @@ public class FolderController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto(ex.getMessage()));
     }
 
-    
 }

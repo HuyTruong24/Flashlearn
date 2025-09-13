@@ -14,16 +14,15 @@ import com.api.flashlearn.dtos.JwtResponse;
 import com.api.flashlearn.dtos.LoginRequest;
 import com.api.flashlearn.dtos.PasswordResetTokenDto;
 import com.api.flashlearn.dtos.RegisterUserRequest;
-import com.api.flashlearn.entities.User;
+
 import com.api.flashlearn.exceptions.AccountNotVerifiedException;
 import com.api.flashlearn.exceptions.EmailInUseException;
 import com.api.flashlearn.exceptions.PasswordMismatchException;
 import com.api.flashlearn.exceptions.TokenNotFoundException;
-import com.api.flashlearn.exceptions.UserNotFoundException;
+
 import com.api.flashlearn.repositories.UserRepository;
 import com.api.flashlearn.services.AuthService;
 import com.api.flashlearn.services.JwtService;
-import com.api.flashlearn.services.UserService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,7 +30,6 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 import java.util.Map;
-import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +55,14 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
     
+    /**
+     * Endpoint to authenticate a user and generate JWT tokens.
+     * @param request
+     * @param response
+     * @return ResponseEntity with JwtResponse containing the access token
+     * @throws BadCredentialsException if the email or password is incorrect
+     * @throws AccountNotVerifiedException if the user's account is not verified
+     */
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
@@ -77,6 +83,13 @@ public class AuthController {
         return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
     }
 
+    /**
+     * Endpoint to register a new user.
+     * @param request
+     * @param uriBuilder
+     * @return ResponseEntity with UserDto and location header
+     * @throws EmailInUseException if the email is already in use and activated by another verified user
+     */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterUserRequest request, UriComponentsBuilder uriBuilder) {
         var userDto = authService.register(request);
@@ -103,12 +116,27 @@ public class AuthController {
         
         return ResponseEntity.ok(new JwtResponse(accessToken.toString()));
     }
+    /**
+     * Endpoint to verify email and create a password reset token.
+     * @param request
+     * @return ResponseEntity with PasswordResetTokenDto
+     * @throws BadCredentialsException if the email does not exist in the system
+     */
     @PostMapping("/verify-email-for-password-reset")
     public ResponseEntity<PasswordResetTokenDto> verifyEmail(@Valid @RequestBody EmailVerificationRequest request) {
         var tokenDto = authService.createPasswordResetToken(request.getEmail());
         return ResponseEntity.ok().body(tokenDto);
     }
     
+    /**
+     * Endpoint to reset a user's password using a valid token.
+     * @param userId 
+     * @param tokenId
+     * @param request
+     * @return ResponseEntity with no content
+     * @throws PasswordMismatchException if the new password and confirm password do not match
+     * @throws TokenNotFoundException if the token is invalid or does not exist
+     */
     @PostMapping("/reset-password/{userId}/{tokenId}")
     public ResponseEntity<Void> resetPassword(
         @PathVariable Long userId,
@@ -128,12 +156,25 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Endpoint to verify a user's account using a verification code.
+     * @param request
+     * @return ResponseEntity with success message
+     * @throws BadCredentialsException if the email is invalid, user is already verified,
+     *         verification code is invalid, or verification code has expired
+     */
     @PostMapping("/verify-user")
     public ResponseEntity<?> verifyUser(@RequestBody VerifyUserRequest request) {
         authService.verifyUser(request);
         return ResponseEntity.ok().body(Map.of("message", "Account verified successfully"));
     }
 
+    /**
+     * Endpoint to resend the verification code to a user's email.
+     * @param request
+     * @return ResponseEntity with success message
+     * @throws BadCredentialsException if the email is invalid or user is already verified
+     */
     @PostMapping("/resend")
     public ResponseEntity<?> resendVerificationCode(@RequestBody EmailVerificationRequest request) {
         authService.resendVerificationCode(request.getEmail());
@@ -152,18 +193,43 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Exception handler for EmailInUseException.
+     * @return ResponseEntity with error message and 400 Bad Request status
+     */
     @ExceptionHandler(EmailInUseException.class)
     public ResponseEntity<ErrorDto> handleEmailInUseException() {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto("Email is already in use"));
     }
+    /**
+     * Exception handler for PasswordMismatchException.
+     * @return ResponseEntity with error message and 400 Bad Request status
+     */
+    @ExceptionHandler(PasswordMismatchException.class)
+    public ResponseEntity<ErrorDto> handlePasswordMismatchException(PasswordMismatchException exception) {
+        return ResponseEntity.badRequest().body(new ErrorDto(exception.getMessage()));
+    }
+    /**
+     * Exception handler for BadCredentialsException.
+     * @return ResponseEntity with 401 Unauthorized status
+     */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Void> handleBadCredentialsException() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+    /**
+     * Exception handler for AccountNotVerifiedException.
+     * @param ex
+     * @return ResponseEntity with error message and 403 Forbidden status
+     */
     @ExceptionHandler(AccountNotVerifiedException.class)
     public ResponseEntity<ErrorDto> handleAccountNotVerifiedException(AccountNotVerifiedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorDto(ex.getMessage()));
     }
+    /**
+     * Exception handler for TokenNotFoundException.
+     * @return ResponseEntity with 404 Not Found status
+     */
     @ExceptionHandler(TokenNotFoundException.class)
     public ResponseEntity<Void> handleTokenNotFoundException() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
