@@ -5,14 +5,12 @@ import java.util.List;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.api.flashlearn.dtos.RegisterUserRequest;
 import com.api.flashlearn.dtos.UpdateUserRequest;
 import com.api.flashlearn.dtos.UserDto;
 import com.api.flashlearn.entities.User;
 import com.api.flashlearn.exceptions.UserNotFoundException;
 import com.api.flashlearn.mappers.UserMapper;
 import com.api.flashlearn.repositories.UserRepository;
-
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,6 +32,7 @@ public class UserService {
                 .map(userMapper::toDto)
                 .orElse(null);
     }
+
     public UserDto getByEmail(String email) {
         return userRepository.findByEmail(email)
                 .map(userMapper::toDto)
@@ -50,10 +49,10 @@ public class UserService {
 
     public UserDto updateUser(Long id, UpdateUserRequest request) {
         User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException());
-        
+
         userMapper.updateUserRequest(request, user);
         userRepository.save(user);
-        
+
         return userMapper.toDto(user);
     }
 

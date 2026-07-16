@@ -3,8 +3,8 @@ package com.api.flashlearn.filters;
 import java.io.IOException;
 import java.util.Collections;
 
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -20,11 +20,13 @@ import lombok.AllArgsConstructor;
 
 @Component
 @AllArgsConstructor
-public class JwtAuthenticationFilter extends OncePerRequestFilter{
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         var authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -34,22 +36,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
 
         var token = authHeader.replace("Bearer ", "");
         var jwt = jwtService.parseToken(token);
-        if(jwt == null || jwt.isExpired()) {
+        if (jwt == null || jwt.isExpired()) {
             filterChain.doFilter(request, response);
             return; // If the token is invalid, return 403
         }
 
-
         var userId = jwt.getUserId();
         var authentication = new UsernamePasswordAuthenticationToken(
-                userId, 
+                userId,
                 null,
-                Collections.emptyList() 
-        );
+                Collections.emptyList());
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response); // Continue with the filter chain
     }
-    
+
 }
