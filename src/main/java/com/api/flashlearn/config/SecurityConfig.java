@@ -33,15 +33,18 @@ public class SecurityConfig {
 
     /**
      * Bean for password encoding using BCrypt.
-     * @return PasswordEncoder instance 
+     * 
+     * @return PasswordEncoder instance
      */
     @Bean
-    public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(); // Using BCrypt for password hashing
     }
 
     /**
-     * Configures the authentication provider with user details service and password encoder.
+     * Configures the authentication provider with user details service and password
+     * encoder.
+     * 
      * @return AuthenticationProvider instance
      */
     @Bean
@@ -54,6 +57,7 @@ public class SecurityConfig {
 
     /**
      * Configures and returns the AuthenticationManager bean.
+     * 
      * @param config AuthenticationConfiguration instance
      * @return AuthenticationManager instance
      * @throws Exception if an error occurs while getting the AuthenticationManager
@@ -66,20 +70,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChange(HttpSecurity http) throws Exception {
         http
-            .sessionManagement(c -> c.sessionCreationPolicy(STATELESS))
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(c -> c
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/users/register").permitAll()
-                .anyRequest().authenticated())
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .exceptionHandling(c -> {
-                c.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
-                c.accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setStatus(HttpStatus.FORBIDDEN.value());
+                .sessionManagement(c -> c.sessionCreationPolicy(STATELESS))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(c -> c
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users/register").permitAll()
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(c -> {
+                    c.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+                    c.accessDeniedHandler((request, response, accessDeniedException) -> {
+                        response.setStatus(HttpStatus.FORBIDDEN.value());
+                    });
                 });
-            });
         return http.build();
     }
-    
+
 }
