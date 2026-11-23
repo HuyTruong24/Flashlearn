@@ -2,7 +2,6 @@ package com.api.flashlearn.services;
 
 import java.util.List;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.api.flashlearn.dtos.UpdateUserRequest;
@@ -19,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
 
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()
