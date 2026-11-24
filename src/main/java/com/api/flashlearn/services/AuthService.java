@@ -3,16 +3,22 @@ package com.api.flashlearn.services;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.api.flashlearn.config.JwtConfig;
+import com.api.flashlearn.dtos.JwtResponse;
+import com.api.flashlearn.dtos.LoginRequest;
 import com.api.flashlearn.dtos.PasswordResetTokenDto;
 import com.api.flashlearn.dtos.RegisterUserRequest;
 import com.api.flashlearn.dtos.UserDto;
 import com.api.flashlearn.dtos.VerifyUserRequest;
 import com.api.flashlearn.entities.User;
+import com.api.flashlearn.exceptions.AccountNotVerifiedException;
 import com.api.flashlearn.exceptions.EmailInUseException;
 import com.api.flashlearn.exceptions.TokenNotFoundException;
 import com.api.flashlearn.mappers.PasswordResetTokenMapper;
@@ -21,6 +27,8 @@ import com.api.flashlearn.repositories.PasswordResetTokenRepository;
 import com.api.flashlearn.repositories.UserRepository;
 
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -33,6 +41,9 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final EmailService emailService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtConfig jwtConfig;
+    private final JwtService jwtService;
 
     public User getCurrentUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -40,10 +51,31 @@ public class AuthService {
         return userRepository.findById(userId).orElse(null);
     }
 
+    public JwtResponse login(LoginRequest request, HttpServletResponse response) {
+        authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        var user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        if (!user.isEnabled()) {
+            throw new AccountNotVerifiedException();
+        }
+
+        var accessToken = jwtService.generateAccessToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
+        var cookie = new Cookie("refreshToken", refreshToken.toString());
+        cookie.setHttpOnly(true); // cannot be accessed by JavaScript
+        cookie.setPath("/auth/refresh");
+        cookie.setMaxAge(jwtConfig.getRefreshTokenExpiration()); // cookie expires in 7 days (should match the refresh
+                                                                 // token expiration)
+        cookie.setSecure(true); // only sent over HTTPS
+        response.addCookie(cookie); // add the cookie to the response
+
+        return new JwtResponse(accessToken.toString());
+    }
+
     public UserDto register(RegisterUserRequest request) {
         var registeredUser = userRepository.findByEmail(request.getEmail()).orElse(null);
         if (registeredUser != null) {
-            if(registeredUser.isEnabled()) {
+            if (registeredUser.isEnabled()) {
                 throw new EmailInUseException();
             }
         }
@@ -58,7 +90,20 @@ public class AuthService {
 
         return userMapper.toDto(user);
     }
-    
+
+    public JwtResponse refresh(String refreshToken) {
+        var jwt = jwtService.parseToken(refreshToken);
+        if (jwt == null || jwt.isExpired()) {
+            return null;
+        }
+
+        var userId = jwt.getUserId();
+        var user = userRepository.findById(userId).orElseThrow();
+        var accessToken = jwtService.generateAccessToken(user);
+
+        return new JwtResponse(accessToken.toString());
+    }
+
     public void verifyUser(VerifyUserRequest input) {
         var user = userRepository.findByEmail(input.getEmail())
                 .orElseThrow(() -> new BadCredentialsException("Invalid email"));
@@ -82,7 +127,7 @@ public class AuthService {
     }
 
     public void resendVerificationCode(String email) {
-         var user = userRepository.findByEmail(email)
+        var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("Invalid email"));
 
         if (user.isEnabled()) {
@@ -143,7 +188,7 @@ public class AuthService {
     }
 
     private String generateVerificationCode() {
-        int code = (int)(Math.random() * 900000) + 100000; // Generate a random 6-digit code
+        int code = (int) (Math.random() * 900000) + 100000; // Generate a random 6-digit code
         return String.valueOf(code);
     }
 }
